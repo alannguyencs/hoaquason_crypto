@@ -13,11 +13,12 @@ from momentum_signal import MOMENTUM_SIGNAL
 import requests
 import aljson
 import threading
+import config
 NUM_PROCESSES = 4
 
 def send_to_telegram(message):
-    apiToken = '5956793173:AAEJbf1VkyhTVYOlSjbh6cFrzEaIQX5ebHI'
-    chatID = '-1001861452010' #2051192236
+    apiToken = config.apiToken
+    chatID = config.chatID
     apiURL = f'https://api.telegram.org/bot{apiToken}/sendMessage'
 
     try:
