@@ -7,3 +7,7 @@ FROM_ADDRESS = "tnguyenhu2-c@my.cityu.edu.hk"
 PASSWORD = "MatKhau2509"
 TO_ADDR = "alannguyen.cs@gmail.com"
 TO_ADDRS = ["alannguyen.cs@gmail.com", "hasunny.1101@gmail.com"]
+
+#telegram
+apiToken = '5956793173:AAEJbf1VkyhTVYOlSjbh6cFrzEaIQX5ebHI'
+chatID = '-1001861452010' #2051192236
