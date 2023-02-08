@@ -12,7 +12,7 @@ import time
 from momentum_signal import MOMENTUM_SIGNAL
 import requests
 import aljson
-import threading
+from multiprocessing import Pool
 import config
 NUM_PROCESSES = 4
 
@@ -36,32 +36,37 @@ def run_bot(pid):
     fold_end = fold_length * (pid + 1) if pid < NUM_PROCESSES - 1 else len(symbols)
     symbols_pid = symbols[fold_start : fold_end]
     print (pid, fold_start, fold_end, len(symbols))
-    while True:
-        try:
-            t_0 = time.time()
-            for symbol in symbols_pid:
-                try:
-                    data_ = binance_listing[symbol]
-                    if data_['quoteAsset'] not in ['BUSD', 'USDT', 'BTC']: continue
-                    momentum_signal = MOMENTUM_SIGNAL(baseAsset=data_['baseAsset'], quoteAsset=data_['quoteAsset'], change_threshold=3.)
-                    message = momentum_signal.update_info()
-                    if message is not None:
-                        # print(message)
-                        # in case of script ran first time it will
-                    # ask either to input token or otp sent to
-                    # number or sent or your telegram id3
-                        send_to_telegram(message)
-                except BaseException as error_:
-                    print (symbol, error_)
-                    continue
 
-            t_1 = time.time()
-            print ("pid = {}, running time = {:.0f} seconds".format(pid, (t_1 - t_0)))
-        # time.sleep(5 * 60)
-        except BaseException as error:
-            print (error)
-            pass
+    # try:
+    if True:
+        t_0 = time.time()
+        for symbol in symbols_pid:
+            # try:
+            if True:
+                data_ = binance_listing[symbol]
+                if data_['quoteAsset'] not in ['BUSD', 'USDT', 'BTC']: continue
+                momentum_signal = MOMENTUM_SIGNAL(baseAsset=data_['baseAsset'], quoteAsset=data_['quoteAsset'],
+                                                  lot_size=data_['lot_size'], change_threshold=3.)
+                message = momentum_signal.update_info()
+                if message is not None:
+                    # print(message)
+                    # in case of script ran first time it will
+                # ask either to input token or otp sent to
+                # number or sent or your telegram id3
+                    send_to_telegram(message)
+            # except BaseException as error_:
+            #     print (symbol, error_)
+            #     continue
+
+        t_1 = time.time()
+        print ("pid = {}, running time = {:.0f} seconds".format(pid, (t_1 - t_0)))
+    # time.sleep(5 * 60)
+    # except BaseException as error:
+    #     print (error)
+    #     pass
 
 if __name__ == '__main__':
-    run_bot(pid=0)
+    with Pool(NUM_PROCESSES) as p:  # processes is the number of worker processes to use
+        while True:
+            p.map(run_bot, [i for i in range(NUM_PROCESSES)])
 
