@@ -3,3 +3,4 @@
 *.pyc
 */config.py
 */backup/*
+crypto_platform.gsheet

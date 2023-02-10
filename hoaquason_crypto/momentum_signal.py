@@ -22,11 +22,10 @@ class MOMENTUM_SIGNAL:
 
     def update_info(self):
         # print (requests.get(self.url).text)
-        time.sleep(0.1)
+        time.sleep(0.2)
         start_time = int(time.time() * 1000 - 1000 * 301)
         url = BINANE_URL + '?symbol=' + self.symbol + '&interval=' + self.interval + f'&startTime={start_time}'
         data = json.loads(requests.get(url).text)
-        # currdata = data[-300:]
 
         current_price = round(float(data[-1][4]), self.lot_size)
         last_price = float(data[0][1])

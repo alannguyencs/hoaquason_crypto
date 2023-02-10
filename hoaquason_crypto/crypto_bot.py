@@ -14,7 +14,7 @@ import requests
 import aljson
 from multiprocessing import Pool
 import config
-NUM_PROCESSES = 4
+NUM_PROCESSES = 8
 
 def send_to_telegram(message):
     apiToken = config.apiToken
