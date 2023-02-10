@@ -22,7 +22,7 @@ class MOMENTUM_SIGNAL:
 
     def update_info(self):
         # print (requests.get(self.url).text)
-        time.sleep(0.2)
+        # time.sleep(0.2)
         start_time = int(time.time() * 1000 - 1000 * 301)
         url = BINANE_URL + '?symbol=' + self.symbol + '&interval=' + self.interval + f'&startTime={start_time}'
         data = json.loads(requests.get(url).text)
@@ -41,7 +41,11 @@ class MOMENTUM_SIGNAL:
             buy_volume += round(float(current_data_[10]), self.round_up)
 
         sell_volume = total_volume - buy_volume
+        total_volume = round(total_volume, self.round_up)
         gap_volume = round(abs(sell_volume - buy_volume), self.round_up)
+        if self.round_up==0:
+            total_volume = int(total_volume)
+            gap_volume = int(gap_volume)
 
         emoji = DOWN_EMOJI if sell_volume > buy_volume > 1 else UP_EMOJI
         datatime_ = self.get_datetime(data[-1])
@@ -55,8 +59,25 @@ class MOMENTUM_SIGNAL:
                                                  gap_volume, self.quoteAsset)
         return message
 
+    def get_percentage_change(self):
+        start_time = int(time.time() * 1000 - 1000 * 301)
+        url = BINANE_URL + '?symbol=' + self.symbol + '&interval=' + self.interval + f'&startTime={start_time}'
+        data = json.loads(requests.get(url).text)
+        # print ('data', data)
+        if len(data) == 0:
+            print ('{}: data is empty'.format(self.symbol))
+            return 0
+
+        current_price = round(float(data[-1][4]), self.lot_size)
+        last_price = float(data[0][1])
+        price_change = current_price / last_price
+        price_change_percentage = round(100 * (price_change - 1), 2) if price_change > 1 \
+            else round(100 * (1 / price_change - 1), 2)
+        return price_change_percentage
+
     def get_datetime(self, data_):
-        return datetime.datetime.fromtimestamp(data_[0] / 1000)
+        return datetime.datetime.fromtimestamp(data_[0] / 1000 + self.timezone_change * 3600)
+
 
 
 

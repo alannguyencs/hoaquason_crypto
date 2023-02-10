@@ -12,4 +12,5 @@ DRIVE_PATH = str(CWF.parent) + '/'
 #     DRIVE_PATH = "C:/Users/Alan/Documents/hoaquason_crypto/hoaquason_crypto/"
 print ('DRIVE_PATH:', DRIVE_PATH)
 BINANCE_LISTING_PATH = DRIVE_PATH + 'binance_listing.json'
+POTENTIAL_SYMBOLS_PATH = DRIVE_PATH + 'potential_symbols.json'
 

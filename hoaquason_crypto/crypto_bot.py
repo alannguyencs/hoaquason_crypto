@@ -14,6 +14,7 @@ import requests
 import aljson
 from multiprocessing import Pool
 import config
+from collections import defaultdict
 NUM_PROCESSES = 8
 
 def send_to_telegram(message):
@@ -29,22 +30,18 @@ def send_to_telegram(message):
 
 binance_listing = aljson.load(BINANCE_LISTING_PATH)
 
-def run_bot(pid):
-    symbols = [key for key in binance_listing.keys()]
-    fold_length = len(symbols) // NUM_PROCESSES
-    fold_start = fold_length * pid
-    fold_end = fold_length * (pid + 1) if pid < NUM_PROCESSES - 1 else len(symbols)
-    symbols_pid = symbols[fold_start : fold_end]
-    print (pid, fold_start, fold_end, len(symbols))
-
+def run_bot(symbol_latest_scan):
+    potential_symbols = aljson.load(POTENTIAL_SYMBOLS_PATH)
+    symbols = [key for key in potential_symbols.keys()]
     # try:
     if True:
         t_0 = time.time()
-        for symbol in symbols_pid:
-            # try:
+        for symbol in symbols:
+            now = time.time()
+            if now - symbol_latest_scan[symbol] < 5 * 60: continue #5 minutes
+
             if True:
                 data_ = binance_listing[symbol]
-                if data_['quoteAsset'] not in ['BUSD', 'USDT', 'BTC']: continue
                 momentum_signal = MOMENTUM_SIGNAL(baseAsset=data_['baseAsset'], quoteAsset=data_['quoteAsset'],
                                                   lot_size=data_['lot_size'], change_threshold=3.)
                 message = momentum_signal.update_info()
@@ -54,19 +51,29 @@ def run_bot(pid):
                 # ask either to input token or otp sent to
                 # number or sent or your telegram id3
                     send_to_telegram(message)
+                    symbol_latest_scan[symbol] = now
+
             # except BaseException as error_:
             #     print (symbol, error_)
             #     continue
 
         t_1 = time.time()
-        print ("pid = {}, running time = {:.0f} seconds".format(pid, (t_1 - t_0)))
+        if t_1 - t_0 > 0.5: print ("running time = {:.2f} seconds".format((t_1 - t_0)))
     # time.sleep(5 * 60)
     # except BaseException as error:
     #     print (error)
     #     pass
 
+
 if __name__ == '__main__':
-    with Pool(NUM_PROCESSES) as p:  # processes is the number of worker processes to use
-        while True:
-            p.map(run_bot, [i for i in range(NUM_PROCESSES)])
+    symbol_latest_scan = defaultdict(lambda: 0)
+    while True:
+        t_0 = time.time()
+        try:
+            run_bot(symbol_latest_scan)
+        except BaseException as error:
+            print(error)
+            time.sleep(0.5)
+            continue
+
 
