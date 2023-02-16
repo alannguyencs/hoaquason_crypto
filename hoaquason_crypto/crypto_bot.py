@@ -30,28 +30,45 @@ def send_to_telegram(message):
 
 binance_listing = aljson.load(BINANCE_LISTING_PATH)
 
-def run_bot(symbol_latest_scan):
-    potential_symbols = aljson.load(POTENTIAL_SYMBOLS_PATH)
-    symbols = [key for key in potential_symbols.keys()]
+def run_bot(baseAsset_latest_price):
+    potential_baseAssets = aljson.load(POTENTIAL_SYMBOLS_PATH)
+    baseAssets = [key for key in potential_baseAssets.keys()]
     # try:
     if True:
         t_0 = time.time()
-        for symbol in symbols:
-            now = time.time()
-            if now - symbol_latest_scan[symbol] < 5 * 60: continue #5 minutes
-
+        for baseAsset in baseAssets:
+            # now = time.time()
+            # if now - baseAsset_latest_scan[baseAsset] < 5 * 60: continue #5 minutes
+            latest_price = -1
             if True:
-                data_ = binance_listing[symbol]
-                momentum_signal = MOMENTUM_SIGNAL(baseAsset=data_['baseAsset'], quoteAsset=data_['quoteAsset'],
-                                                  lot_size=data_['lot_size'], change_threshold=3.)
-                message = momentum_signal.update_info()
-                if message is not None:
-                    # print(message)
-                    # in case of script ran first time it will
-                # ask either to input token or otp sent to
-                # number or sent or your telegram id3
-                    send_to_telegram(message)
-                    symbol_latest_scan[symbol] = now
+                data_list = binance_listing[baseAsset]
+                messages = []
+                for id, data_ in enumerate(data_list):
+                    momentum_signal = MOMENTUM_SIGNAL(baseAsset=data_['baseAsset'], quoteAsset=data_['quoteAsset'],
+                                                      lot_size=data_['lot_size'], change_threshold=3.)
+                    message = momentum_signal.update_info()
+
+                    #check if the price change is not significant
+                    if id == 0:
+                        latest_price = momentum_signal.latest_price
+                        price_change = max(baseAsset_latest_price[baseAsset], latest_price) / \
+                                       min(baseAsset_latest_price[baseAsset], latest_price)
+                        if price_change > 0 and price_change < 1.015:
+                            messages = []
+                            break
+
+                    #check if there is a significant change
+                    if message is not None:
+                        messages.append(message)
+                    else:
+                        messages = []
+                        break
+
+                if len(messages) > 0:
+                    for message in messages:
+                        send_to_telegram(message)
+                        print (message)
+                    baseAsset_latest_price[baseAsset] = latest_price
 
             # except BaseException as error_:
             #     print (symbol, error_)
@@ -66,11 +83,11 @@ def run_bot(symbol_latest_scan):
 
 
 if __name__ == '__main__':
-    symbol_latest_scan = defaultdict(lambda: 0)
+    baseAsset_latest_price = defaultdict(lambda: -1)
     while True:
         t_0 = time.time()
         try:
-            run_bot(symbol_latest_scan)
+            run_bot(baseAsset_latest_price)
         except BaseException as error:
             print(error)
             time.sleep(0.5)

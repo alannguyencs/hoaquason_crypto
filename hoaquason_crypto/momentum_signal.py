@@ -17,6 +17,7 @@ class MOMENTUM_SIGNAL:
         self.lot_size = lot_size
         self.interval = interval
         self.timezone_change = timezone_change
+        self.latest_price = -1
         self.change_threshold = change_threshold
         self.round_up = 0 if quoteAsset in ['BUSD', 'USDT'] else 6
 
@@ -28,6 +29,7 @@ class MOMENTUM_SIGNAL:
         data = json.loads(requests.get(url).text)
 
         current_price = round(float(data[-1][4]), self.lot_size)
+        self.latest_price = current_price
         last_price = float(data[0][1])
         price_change = current_price / last_price
         price_change_percentage = round(100 * (price_change - 1), 2) if price_change > 1 \

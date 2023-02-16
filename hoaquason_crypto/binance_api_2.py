@@ -1,6 +1,6 @@
 import requests
 import json
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import aljson
 import math
 from constants import *
@@ -10,7 +10,8 @@ exchange_url = BINANE_URL + 'exchangeInfo'
 
 data = json.loads(requests.get(exchange_url).text)
 
-listing = OrderedDict()
+
+listing = defaultdict(lambda: {})
 for data_ in data['symbols']:
     print ('data_', data_)
     symbol = data_['symbol']
@@ -20,12 +21,22 @@ for data_ in data['symbols']:
     lot_size = int(-math.log10(float(data_['filters'][0]['minPrice'])))
     status = data_['status']
     if status == 'TRADING':
-        listing[symbol] = {
+        data_ = {
             'baseAsset': baseAsset,
             'quoteAsset': quoteAsset,
             'lot_size': lot_size,
         }
-print ('#symbols = {}'.format(len(listing)))
+        listing[baseAsset][quoteAsset] = data_
+
+#re-organize USDT, BUSD, BTC
+for baseAsset, data_dict in listing.items():
+    data_list = []
+    for quoteAsset in ['USDT', 'BUSD', 'BTC']:
+        if quoteAsset in data_dict:
+            data_list.append(data_dict[quoteAsset])
+    listing[baseAsset] = data_list
+
+print ('#baseAsset = {}'.format(len(listing)))
 aljson.save(listing, BINANCE_LISTING_PATH)
 
 #1394 symbols in total
