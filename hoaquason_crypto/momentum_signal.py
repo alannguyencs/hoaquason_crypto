@@ -10,7 +10,7 @@ DOWN_EMOJI = '\U0001F53B'
 
 class MOMENTUM_SIGNAL:
     def __init__(self, baseAsset='BTC', quoteAsset='USDT', lot_size=5, interval='1s',
-                 timezone_change=-1., change_threshold=3.):
+                 timezone_change=-1., change_threshold=3., debug=True):
         self.symbol = baseAsset + quoteAsset
         self.baseAsset = baseAsset
         self.quoteAsset = quoteAsset
@@ -18,19 +18,26 @@ class MOMENTUM_SIGNAL:
         self.interval = interval
         self.timezone_change = timezone_change
         self.latest_price = -1
+        self.proof_data = []
         self.change_threshold = change_threshold
         self.round_up = 0 if quoteAsset in ['BUSD', 'USDT'] else 6
+        self.debug = debug
 
     def update_info(self):
         # print (requests.get(self.url).text)
         # time.sleep(0.2)
-        start_time = int(time.time() * 1000 - 1000 * 301)
-        url = BINANE_URL + '?symbol=' + self.symbol + '&interval=' + self.interval + f'&startTime={start_time}'
+        # start_time = int(time.time() * 1000 - 1000 * 301)
+        # url = BINANE_URL + '?symbol=' + self.symbol + '&interval=' + self.interval + f'&startTime={start_time}'
+        url = BINANE_URL + '?symbol=' + self.symbol + '&interval=' + self.interval
         data = json.loads(requests.get(url).text)
 
-        current_price = round(float(data[-1][4]), self.lot_size)
-        self.latest_price = current_price
-        last_price = float(data[0][1])
+        if self.debug:
+            for data_ in data:
+                self.proof_data.append((str(self.get_datetime(data_)).replace(':', '-'), data_[4]))
+
+        current_price = float(data[-1][4])
+        self.latest_price = round(current_price, self.lot_size)
+        last_price = float(data[-301][4]) #float(data[0][1])
         price_change = current_price / last_price
         price_change_percentage = round(100 * (price_change - 1), 2) if price_change > 1 \
             else round(100 * (1 / price_change - 1), 2)
@@ -38,7 +45,7 @@ class MOMENTUM_SIGNAL:
 
         total_volume = 0
         buy_volume = 0
-        for current_data_ in data:
+        for current_data_ in data[-300:]:
             total_volume += round(float(current_data_[7]), self.round_up)
             buy_volume += round(float(current_data_[10]), self.round_up)
 
@@ -49,13 +56,16 @@ class MOMENTUM_SIGNAL:
             total_volume = int(total_volume)
             gap_volume = int(gap_volume)
 
-        emoji = DOWN_EMOJI if sell_volume > buy_volume > 1 else UP_EMOJI
+        emoji = DOWN_EMOJI if current_price < last_price else UP_EMOJI
         datatime_ = self.get_datetime(data[-1])
+
+        # print ('current_price = {:.10f}'.format(current_price))
+        # print ('last_price = {:.10f}'.format(last_price))
 
         message = ""
         message += "{}\n".format(datatime_)
         message += "{:<15}: {} {}%\n".format(self.baseAsset + '/' + self.quoteAsset, emoji, price_change_percentage)
-        message += "{:<20}: {}\n".format('Last', "{:.12f}".format(current_price).rstrip('0').rstrip('.'))
+        message += "{:<20}: {}\n".format('Last', "{:.12f}".format(self.latest_price).rstrip('0').rstrip('.'))
         message += "{:<15}: {:,} {}\n".format('Vol total ' + '5m', total_volume, self.quoteAsset)
         message += "{:<15}: {:,} {}\n".format('Vol gap ' + '5m',
                                                  gap_volume, self.quoteAsset)

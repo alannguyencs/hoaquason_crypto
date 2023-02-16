@@ -31,12 +31,12 @@ def rank_tokens(num_selections):
 
 if __name__ == '__main__':
     while True:
-        # try:
-        if True:
+        try:
+        # if True:
             rank_tokens(num_selections=20)
-        # except BaseException as error:
-        #     print(error)
-        #     time.sleep(0.5)
-        #     continue
+        except BaseException as error:
+            print(error)
+            time.sleep(0.5)
+            continue
 
 

@@ -1,5 +1,8 @@
 from pathlib import Path
 import os
+import json
+import requests
+import datetime
 
 CWF = Path(__file__)
 
@@ -13,4 +16,4 @@ DRIVE_PATH = str(CWF.parent) + '/'
 print ('DRIVE_PATH:', DRIVE_PATH)
 BINANCE_LISTING_PATH = DRIVE_PATH + 'binance_listing.json'
 POTENTIAL_SYMBOLS_PATH = DRIVE_PATH + 'potential_symbols.json'
-
+DATA_PATH = DRIVE_PATH + 'data/'

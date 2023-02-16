@@ -30,7 +30,7 @@ def send_to_telegram(message):
 
 binance_listing = aljson.load(BINANCE_LISTING_PATH)
 
-def run_bot(baseAsset_latest_price):
+def run_bot(baseAsset_latest_price, debug=True):
     potential_baseAssets = aljson.load(POTENTIAL_SYMBOLS_PATH)
     baseAssets = [key for key in potential_baseAssets.keys()]
     # try:
@@ -43,10 +43,12 @@ def run_bot(baseAsset_latest_price):
             if True:
                 data_list = binance_listing[baseAsset]
                 messages = []
+                proof_data = []
                 for id, data_ in enumerate(data_list):
                     momentum_signal = MOMENTUM_SIGNAL(baseAsset=data_['baseAsset'], quoteAsset=data_['quoteAsset'],
-                                                      lot_size=data_['lot_size'], change_threshold=3.)
+                                                      lot_size=data_['lot_size'], change_threshold=3., debug=debug)
                     message = momentum_signal.update_info()
+                    proof_data.append(momentum_signal.proof_data)
 
                     #check if the price change is not significant
                     if id == 0:
@@ -68,6 +70,19 @@ def run_bot(baseAsset_latest_price):
                     for message in messages:
                         send_to_telegram(message)
                         print (message)
+
+                        if debug:
+                            proof_file = open("{}{}_{}.csv".format(DATA_PATH, baseAsset, proof_data[0][-1][0]), 'w')
+                            proof_file.write("Datetime")
+                            for data_ in data_list:
+                                proof_file.write(", {}".format(data_['quoteAsset']))
+                            proof_file.write('\n')
+                            for line_id in range(len(proof_data[0])):
+                                proof_file.write("{}, {}".format(proof_data[0][line_id][0], proof_data[0][line_id][1]))
+                                for quote_id in range(1, len(proof_data)):
+                                    proof_file.write(", {}".format(proof_data[quote_id][line_id][1]))
+                                proof_file.write('\n')
+
                     baseAsset_latest_price[baseAsset] = latest_price
 
             # except BaseException as error_:
@@ -87,7 +102,7 @@ if __name__ == '__main__':
     while True:
         t_0 = time.time()
         try:
-            run_bot(baseAsset_latest_price)
+            run_bot(baseAsset_latest_price, debug=True)
         except BaseException as error:
             print(error)
             time.sleep(0.5)
